@@ -2,19 +2,7 @@
 
 using namespace std;
 
-const size_t moder = 1e9 + 7;
-
-size_t fib_mod(size_t index, size_t moder)
-{
-    size_t prepre = 0, pre = 1;
-    for (size_t i = 1; i < index; i++)
-    {
-        size_t sum = (prepre % moder + pre % moder) % moder;
-        prepre = pre;
-        pre = sum;
-    }
-    return pre;
-}
+const size_t mod = 1e9 + 7;
 
 int main()
 {
@@ -25,27 +13,37 @@ int main()
     size_t n, x;
     cin >> n >> x;
 
-    size_t count;
-    size_t bin = 0;
+    size_t oneSum = 0;
+    size_t evenSum = 0;
+    size_t binary = 0;
     while (n--)
     {
         size_t a;
         cin >> a;
-        bin ^= a;
-        if (bin == x)
+        binary ^= a;
+        if (binary == x)
         {
-            ++count;
-            bin = 0;
+            oneSum += evenSum + 1;
+            oneSum %= mod;
+        }
+        else if (binary == 0)
+        {
+            evenSum += oneSum;
+            evenSum %= mod;
         }
     }
 
-    if (bin != 0)
+    if (binary == x)
     {
-        cout << "0\n";
+        cout << (evenSum + 1) % mod << "\n";
+    }
+    else if (binary == 0)
+    {
+        cout << oneSum << "\n";
     }
     else
     {
-        cout << fib_mod(count, moder) << "\n";
+        cout << "0\n";
     }
 
     return 0;
