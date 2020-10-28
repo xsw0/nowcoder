@@ -1,7 +1,51 @@
 #include <iostream>
 #include <bitset>
+#include <numeric>
 
 using namespace std;
+
+class float16_t
+{
+    bool sign;
+    bitset<5> exp;
+    bitset<10> fraction;
+
+public:
+    float16_t(float f)
+    {
+        bitset<32> bs(*(uint32_t *)(&f));
+        sign = bs[31];
+        exp = (bs << 4 >> 4 >> 23).to_ulong() - 127 + 15;
+        fraction = (bs << 9 >> 9 >> 13).to_ulong();
+    }
+    operator float() const
+    {
+        bitset<32> bs;
+        bs[31] = sign;
+        bs |= (exp.to_ullong() - 15 + 127) << 23;
+        bs |= fraction.to_ullong() << 13;
+        auto ull = bs.to_ullong();
+        return *(float *)(&ull);
+    }
+
+    bitset<16> to_bitset() const
+    {
+        bitset<16> result;
+        result[15] = sign;
+        result |= exp.to_ullong() << 10;
+        result |= fraction.to_ullong();
+        return result;
+    }
+
+    bitset<16> operator+(const float16_t &other) const
+    {
+        return float16_t(float(*this) + float(other)).to_bitset();
+    }
+    bitset<16> operator*(const float16_t &other) const
+    {
+        return float16_t(float(*this) * float(other)).to_bitset();
+    }
+};
 
 int main()
 {
@@ -17,50 +61,16 @@ int main()
         int op;
         float a, b;
         cin >> op >> a >> b;
-        auto printFloat16 = [](float f) {
-            bitset<sizeof(float) * 8> bs(*(uint32_t *)(&f));
-
-            // sign
-            cout << bs[31];
-
-            // exp
-            {
-                bitset<8> exp8;
-                for (size_t i = 0; i < 8; ++i)
-                {
-                    exp8.set(i, bs[i + 23]);
-                }
-                if (exp8.to_ulong() < (127 - 15))
-                {
-                    cout << "00000";
-                }
-                if (exp8.to_ulong() - (127 - 15) > 0b11111)
-                {
-                    cout << "11111";
-                }
-                else
-                {
-                    bitset<5> exp5(exp8.to_ulong() - (127 - 15));
-                    cout << exp5;
-                }
-            }
-
-            // fraction
-            for (size_t i = 22; i > 12; --i)
-            {
-                cout << bs[i];
-            }
-        };
         switch (op)
         {
         case 2:
-            printFloat16(a + b);
+            cout << float16_t(a) + float16_t(b);
             break;
         case 3:
-            printFloat16(a * b);
+            cout << float16_t(a) * float16_t(b);
             break;
         default:
-            printFloat16(a);
+            cout << float16_t(a).to_bitset();
             break;
         }
         cout << "\n";
